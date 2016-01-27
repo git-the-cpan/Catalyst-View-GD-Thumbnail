@@ -1,81 +1,8 @@
-package Catalyst::View::GD::Thumbnail;
-
-use warnings;
-use strict;
-use parent 'Catalyst::View';
-use Image::Info qw/image_type/;
-use Image::Resize;
-use List::Util qw/min max/;
-
-our $VERSION = '0.14';
-
-sub process {
-    my ($self, $c) = @_;
-    my $file = $c->stash->{thumbnail}->{image};
-    my $x = $c->stash->{thumbnail}->{x};
-    my $y = $c->stash->{thumbnail}->{y};
-
-    if(!defined $c->stash->{thumbnail}->{quality}) {
-        $c->stash->{thumbnail}->{quality} = "";
-    }
-
-    my $quality = $c->stash->{thumbnail}->{quality};
-    my $mime = image_type($file)->{file_type};
-    my $resize = Image::Resize->new($file);
-    my $source_aspect = $resize->width / $resize->height;
-    $x ||= $y * $source_aspect;
-    $y ||= $x / $source_aspect;
-    my $thumbnail = $resize->resize($x,$y);
-  
-    if($mime eq 'BMP') {
-        $thumbnail = $thumbnail->bmp;
-    }
-    elsif($mime eq 'GIF') {
-        $thumbnail = $thumbnail->gif;
-    }
-    elsif($mime eq 'JPEG') {
-        if($quality eq "" || $quality > 100 || $quality < 0) {
-            $thumbnail = $thumbnail->jpeg;
-        }
-        else {
-            $thumbnail = $thumbnail->jpeg($quality);
-        }
-    }
-    elsif($mime eq 'PNG') {
-        $thumbnail = $thumbnail->png;
-        if($quality eq "" || $quality > 9 || $quality < 0) {
-            $thumbnail = $thumbnail->png;
-        }
-        else {
-            $thumbnail = $thumbnail->png($quality);
-        }
-    }
-    elsif($mime eq 'X-XBITMAP') {
-        $thumbnail = $thumbnail->xbm;
-    }
-    elsif($mime eq 'X-XPIXMAP') {
-        $thumbnail = $thumbnail->xpm;
-    }
-    else {
-        my $error = qq/Unsupported image format/;
-        $c->log->error($error);
-        $c->error($error);
-        return 0;
-    }
-
-    $c->response->content_type($mime);
-    $c->response->body($thumbnail);
-}
-
-1;
-
-__END__
-
 =encoding utf8
 
 =head1 NAME
 
-Catalyst::View::GD::Thumbnail - Catalyst view to resize images for thumbnails
+Catalyst::View::GD::Thumbnail - Catalyst view to resize images for thumbnails.
 
 =cut
 
